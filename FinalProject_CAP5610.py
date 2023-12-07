@@ -22,6 +22,8 @@ from sklearn.preprocessing import LabelEncoder
 import scipy.stats as stats
 # import class for min-max scaler
 from sklearn.preprocessing import MinMaxScaler
+import shap
+
 
 largecsv = os.getcwd() + "\\Combined_MNIST_70k.csv"
 smallcsv = os.getcwd() + "\\Dataset_10k_1.csv"
@@ -74,6 +76,32 @@ def xgb_score(x_trn, y_trn, x_tst, y_tst, r):
     return xg_scores_total / (xg_scores.shape[0] + 1)
 
 
+# filtering samples based on true predicted label
+def filter_shap(test_data, shap_array, y_true, y_map_new):
+    df_data = []
+    ids_list = list(range(0, len(test_data) - 1))
+    pix_list = list(range(0, 784))
+    # pix_list = pix_list[0: 783]
+
+    for i, sampl in enumerate(shap_array[0]):
+        # print(sampl)
+        sample_id = ids_list[i]
+        label = y_map_new[i]
+        truelabel = np.array(y_true)[i]
+        # print("label :", label)
+        # label = pl.Expr.map_dict[label]
+        # print(label)
+        shap_scores_flat = sampl[: len(pix_list)]
+
+        df_data.append([sample_id, *list(shap_scores_flat), label, truelabel])
+
+    shap_df = pd.DataFrame(data=np.array(df_data), columns=['id', *pix_list, 'predicted_label', 'true_label'])
+    shap_df.set_index('id', inplace=True)
+    # shap_df['true_label'] = y_true
+
+    return shap_df
+
+
 if __name__ == "__main__":
     largepd = pd.read_csv(largecsv, header=0)  # load large csv to memory
     smallpd = pd.read_csv(smallcsv, header=0)  # load small csv to memory
@@ -117,6 +145,131 @@ if __name__ == "__main__":
     # violin plots with min-max normalized data
     draw_violin(X_minmax_sm_mn, y_small, targets, 'Small dataset min-max')
     draw_violin(X_minmax_lg_mn, y_large, targets, 'Large dataset min-max')
+
+    # Experimental design for XGBoost
+    # set the seed
+    seedloop = [0, 10, 20, 30, 40]
+    xg_accuracies_sm = []
+    xg_accuracies_sm_z = []
+    xg_accuracies_sm_m = []
+    xg_accuracies_lg = []
+    xg_accuracies_lg_z = []
+    xg_accuracies_lg_m = []
+
+    # not not-normalized data
+    # split data set for train and test with 80/20 stratified split
+    X_train_lg, X_test_lg, y_train_lg, y_test_lg = train_test_split(X_large.to_numpy(), y_large, stratify=y_large,
+                                                                    test_size=0.20, random_state=0)
+    X_train_sm, X_test_sm, y_train_sm, y_test_sm = train_test_split(X_small.to_numpy(), y_small, stratify=y_small,
+                                                                    test_size=0.20, random_state=0)
+
+    # split data set after normalizing with z-score
+    X_trainz_lg, X_testz_lg, y_trainz_lg, y_testz_lg = train_test_split(X_z_lg, y_large, stratify=y_large,
+                                                                        test_size=0.20, random_state=0)
+    X_trainz_sm, X_testz_sm, y_trainz_sm, y_testz_sm = train_test_split(X_z_sm, y_small, stratify=y_small,
+                                                                        test_size=0.20, random_state=0)
+    # split data set after normalizing with min-max
+    X_trainm_lg, X_testm_lg, y_trainm_lg, y_testm_lg = train_test_split(X_minmax_lg, y_large, stratify=y_large,
+                                                                        test_size=0.20, random_state=0)
+    X_trainm_sm, X_testm_sm, y_trainm_sm, y_testm_sm = train_test_split(X_minmax_sm, y_small, stratify=y_small,
+                                                                        test_size=0.20, random_state=0)
+
+    # loop for seed values large dataset
+    for i in seedloop:
+        xg_accuracies_lg.append(xgb_score(X_train_lg, y_train_lg, X_test_lg, y_test_lg, i))
+        xg_accuracies_lg_z.append(xgb_score(X_trainz_lg, y_trainz_lg, X_testz_lg, y_testz_lg, i))
+        xg_accuracies_lg_m.append(xgb_score(X_trainm_lg, y_trainm_lg, X_testm_lg, y_testm_lg, i))
+
+    print("XGBoost Accuracies LG not-normalized - ", xg_accuracies_lg)
+    print("XGBoost Accuracies LG zscore - ", xg_accuracies_lg_z)
+    print("XGBoost Accuracies LG minmax - ", xg_accuracies_lg_m)
+
+    # draw plot with classifier results
+    plotdata = pd.DataFrame({
+        "All genes not normalized": xg_accuracies_lg,
+        "All genes z-score": xg_accuracies_lg_z,
+        "All genes min-max": xg_accuracies_lg_m
+    },
+        index=["0", "10", "20", "30", "40"]
+    )
+    plotdata.plot(kind="bar", figsize=(15, 8))
+
+    plt.title("XGBoost Large Dataset")
+
+    plt.xlabel("Random State")
+
+    plt.ylabel("Accuracy")
+
+    plt.legend(prop={'size': 10}, loc='lower right')
+    plt.show()
+
+    # loop for seed values small dataset
+    for i in seedloop:
+        xg_accuracies_sm.append(xgb_score(X_train_sm, y_train_sm, X_test_sm, y_test_sm, i))
+        xg_accuracies_sm_z.append(xgb_score(X_trainz_sm, y_trainz_sm, X_testz_sm, y_testz_sm, i))
+        xg_accuracies_sm_m.append(xgb_score(X_trainm_sm, y_trainm_sm, X_testm_sm, y_testm_sm, i))
+
+    print("XGBoost Accuracies SM not-normalized - ", xg_accuracies_sm)
+    print("XGBoost Accuracies SM zscore - ", xg_accuracies_sm_z)
+    print("XGBoost Accuracies SM minmax - ", xg_accuracies_sm_m)
+
+    # draw plot with classifier results
+    plotdata = pd.DataFrame({
+        "All genes not normalized": xg_accuracies_sm,
+        "All genes z-score": xg_accuracies_sm_z,
+        "All genes min-max": xg_accuracies_sm_m
+    },
+        index=["0", "10", "20", "30", "40"]
+    )
+    plotdata.plot(kind="bar", figsize=(15, 8))
+
+    plt.title("XGBoost")
+
+    plt.xlabel("Random State")
+
+    plt.ylabel("Accuracy")
+
+    plt.legend(prop={'size': 10}, loc='lower right')
+    plt.show()
+
+    kf = KFold(n_splits=5)
+    for k, (train_index, test_index) in enumerate(kf.split(X_small)):
+        X_train_sm = np.take(X_small.to_numpy(), train_index, axis=0)
+        # print("X train: ", X_train_sm.shape)
+        y_train_sm = np.take(y_small, train_index, axis=0)
+        # print("Y train: ", y_train_sm.shape)
+        X_test_sm = np.take(X_small.to_numpy(), test_index, axis=0)
+        # print("X test: ", X_test_sm.shape)
+        y_test_sm = np.take(y_small, test_index, axis=0)
+        # print("Y test: ", y_test_sm.shape)
+
+        csvfn = os.getcwd() + "\\shap_df" + str(k) + ".csv"
+        # print(csvfn)
+
+        xg_clf = XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0, reg_lambda=1,
+                               subsample=1, colsample_bytree=1, objective='multi:softprob', num_class=10, random_state=10)
+        xg_clf.fit(X_train_sm, y_train_sm)
+        y_predict_sm = xg_clf.predict(X_test_sm)
+        # print(y_predict_sm.shape)
+        # print(y_predict_sm)
+        # exit(0)
+        # explain the xgb model with SHAP
+        explainer_xgb = shap.TreeExplainer(xg_clf)
+        # calculating shap value
+        out_list = []
+        num_samples = np.shape(X_test_sm)[0]
+        for sample in tqdm(range(0, num_samples)):
+            # shap
+            shap_values = explainer_xgb.shap_values(X_test_sm[sample: sample + 1])
+            out_list.append(shap_values)
+
+        # squeeze this shap value for the test data
+        shap_arr = np.squeeze(np.array(out_list))
+        # print(shap_arr.shape[0])
+
+        shap_df = filter_shap(X_test_sm, shap_arr, y_test_sm, y_predict_sm)
+        # shap.plots.bar(shap_df1)
+        shap_df.to_csv(csvfn)
 
 
 
