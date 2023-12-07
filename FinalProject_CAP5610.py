@@ -242,88 +242,142 @@ if __name__ == "__main__":
 
 
 #+++++++++++++++++++++++++++++++++++++++++++++++
-#++++++++++++++++   SHAP    Output 4 and 5 now (5 comming soon)
+#++++++++++++++++   SHAP    Output 4
 #+++++++++++++++++++++++++++++++++++++++++++++++
 
 
 
-# Initialize XGBoost classifier
+    # # Initialize XGBoost classifier
+    # xg_clf = XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0,
+    #                        reg_lambda=1, subsample=1, colsample_bytree=1, objective='multi:softprob', num_class=10, random_state=10)
+
+    # # Initialize SHAP explainer
+    # explainer = None
+
+    # # Normalization types
+    # normalization_types = ["unnormalized", "z-score", "min-max"]
+
+    # # Perform 5-fold cross-validation for each normalization type
+    # for normalization_type in normalization_types:
+    #     # Preprocess the data based on normalization type
+    #     if normalization_type == "z-score":
+    #         scaler = StandardScaler()
+    #     elif normalization_type == "min-max":
+    #         scaler = MinMaxScaler()
+    #     else:
+    #         scaler = None
+
+    #     # Initialize cross-validation
+    #     kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=10)
+
+    #     for train_index, test_index in kf.split(X_small, y_small):
+    #         X_train_fold, X_test_fold = X_small.iloc[train_index], X_small.iloc[test_index]
+    #         y_train_fold, y_test_fold = y_small.iloc[train_index], y_small.iloc[test_index]
+
+    #         # Apply normalization
+    #         if scaler is not None:
+    #             X_train_fold = scaler.fit_transform(X_train_fold)
+    #             X_test_fold = scaler.transform(X_test_fold)
+
+    #         # Train XGBoost classifier
+    #         model = XGBClassifier(xg_clf)
+    #         model.fit(X_train_fold, y_train_fold)
+
+    #         # Create SHAP explainer if not created yet
+    #         if explainer is None:
+    #             explainer = shap.TreeExplainer(model)
+
+    #         # Apply SHAP explainer for each fold
+    #         shap_values = explainer.shap_values(X_test_fold)
+
+    #         # Convert shap_values list to NumPy array
+    #         shap_values = np.array(shap_values)
+
+    #         # Isolate top 20 features for each sample
+    #         top_features_indices = np.argsort(np.abs(shap_values), axis=2)[:, :, -20:]
+
+    #         # Reshape top_features_indices to 2D array
+    #         top_features_indices_2d = top_features_indices.reshape(-1, 20)
+
+    #         # Create DataFrame for local feature importance
+    #         temp_df = pd.DataFrame(index=np.arange(len(X_test_fold) * 10))
+    #         shap_df_local = pd.DataFrame(top_features_indices_2d, index=temp_df.index,
+    #                                       columns=[f"Feature_{i}" for i in range(1, 21)])
+
+    #         # Comparing Samples in a Class
+    #         num_classes = len(np.unique(y_test_fold))
+    #         for class_label in range(num_classes):
+    #             # Randomly select three samples for each class
+    #             samples_in_class = X_test_fold[y_test_fold == class_label]
+    #             samples_in_class_df = pd.DataFrame(samples_in_class)
+    #             selected_samples = samples_in_class_df.sample(min(3, len(samples_in_class)), random_state=10)
+
+    #             # Ensure selected_samples.index is within the bounds of top_features_indices_2d
+    #             valid_indices = selected_samples.index[selected_samples.index < top_features_indices_2d.shape[0]]
+
+    #             # Draw Venn diagram using the top 20 features for each set of three samples
+    #             feature_sets = [set(top_features_indices_2d[sample_id]) for sample_id in valid_indices]
+    #             venn3(feature_sets, set_labels=[f"Sample {i+1}" for i in range(len(feature_sets))])
+    #             plt.title(f"Class {class_label} - Top 20 Features Intersection ({normalization_type})")
+    #             plt.show()
+
+    #         # Output: Local Feature Importance DataFrame
+    #         print("Local Feature Importance DataFrame:")
+    #         print(shap_df_local)
+
+
+    #+++++++++++++++++++++++++++++++
+    #++++++++   OUTPUT 5    +++++++
+    #+++++++++++++++++++++++++++++++
+
+    from sklearn.model_selection import train_test_split
+   
     xg_clf = XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0,
                            reg_lambda=1, subsample=1, colsample_bytree=1, objective='multi:softprob', num_class=10, random_state=10)
 
-    # Initialize SHAP explainer
-    explainer = None
+    model = XGBClassifier(xg_clf)
 
-    # Normalization types
-    normalization_types = ["unnormalized", "z-score", "min-max"]
+    X = X_small
+    y = y_small
 
-    # Perform 5-fold cross-validation for each normalization type
-    for normalization_type in normalization_types:
-        # Preprocess the data based on normalization type
-        if normalization_type == "z-score":
-            scaler = StandardScaler()
-        elif normalization_type == "min-max":
-            scaler = MinMaxScaler()
-        else:
-            scaler = None
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # Initialize cross-validation
-        kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=10)
+    # Train the XGBoost model
 
-        for train_index, test_index in kf.split(X_small, y_small):
-            X_train_fold, X_test_fold = X_small.iloc[train_index], X_small.iloc[test_index]
-            y_train_fold, y_test_fold = y_small.iloc[train_index], y_small.iloc[test_index]
+    model.fit (X_train, y_train)
 
-            # Apply normalization
-            if scaler is not None:
-                X_train_fold = scaler.fit_transform(X_train_fold)
-                X_test_fold = scaler.transform(X_test_fold)
+    # Predict on the test set
+    predictions = model.predict (X_test)
+    # Identify correctly predicted samples
+    correctly_predicted = predictions == y_test
 
-            # Train XGBoost classifier
-            model = XGBClassifier(xg_clf)
-            model.fit(X_train_fold, y_train_fold)
+    # Compute SHAP values for the test set
+    explainer = shap.Explainer(model)
+    shap_values = explainer (X_test)
 
-            # Create SHAP explainer if not created yet
-            if explainer is None:
-                explainer = shap.TreeExplainer(model)
+    # Convert the boolean series to a numpy array for proper indexing
+    correctly_predicted_np = correctly_predicted.to_numpy()
+    # Process for each class
 
-            # Apply SHAP explainer for each fold
-            shap_values = explainer.shap_values(X_test_fold)
-
-            # Convert shap_values list to NumPy array
-            shap_values = np.array(shap_values)
-
-            # Isolate top 20 features for each sample
-            top_features_indices = np.argsort(np.abs(shap_values), axis=2)[:, :, -20:]
-
-            # Reshape top_features_indices to 2D array
-            top_features_indices_2d = top_features_indices.reshape(-1, 20)
-
-            # Create DataFrame for local feature importance
-            temp_df = pd.DataFrame(index=np.arange(len(X_test_fold) * 10))
-            shap_df_local = pd.DataFrame(top_features_indices_2d, index=temp_df.index,
-                                          columns=[f"Feature_{i}" for i in range(1, 21)])
-
-            # Comparing Samples in a Class
-            num_classes = len(np.unique(y_test_fold))
-            for class_label in range(num_classes):
-                # Randomly select three samples for each class
-                samples_in_class = X_test_fold[y_test_fold == class_label]
-                samples_in_class_df = pd.DataFrame(samples_in_class)
-                selected_samples = samples_in_class_df.sample(min(3, len(samples_in_class)), random_state=10)
-
-                # Ensure selected_samples.index is within the bounds of top_features_indices_2d
-                valid_indices = selected_samples.index[selected_samples.index < top_features_indices_2d.shape[0]]
-
-                # Draw Venn diagram using the top 20 features for each set of three samples
-                feature_sets = [set(top_features_indices_2d[sample_id]) for sample_id in valid_indices]
-                venn3(feature_sets, set_labels=[f"Sample {i+1}" for i in range(len(feature_sets))])
-                plt.title(f"Class {class_label} - Top 20 Features Intersection ({normalization_type})")
-                plt.show()
-
-            # Output: Local Feature Importance DataFrame
-            print("Local Feature Importance DataFrame:")
-            print(shap_df_local)
+    for cls in np.unique (y_test):
+        # Filter SHAP values for correctly predicted samples of the class
+        class_indices = (y_test== cls).to_numpy() & correctly_predicted_np
+        class_shap_values = shap_values [class_indices]
+        # Flatten the SHAP values across all dimensions except for features.
+        # Ensure that the result is a one-dimensional array
+        flattened_shap_values = np.abs(class_shap_values.values).reshape (-1, X_test.shape[1]).mean(axis=0)
+        # Extract top 20 features
+        top_features_indices = np.argsort (flattened_shap_values) [::-1] [:20]
+        top_features = X_test.columns [top_features_indices]
+        top_shap_values = flattened_shap_values [top_features_indices]
+    # Draw barplot for top 20 features
+        plt.figure(figsize=(10, 6))
+        plt.barh(range (20), top_shap_values, tick_label=top_features)
+        plt.gca().invert_yaxis()
+        plt.title(f"Top 20 Features for Class (cls) Based on Mean SHAP Values")
+        plt.xlabel("Mean Absolute SHAP Value")
+        plt.show()
 
 
 
@@ -332,6 +386,12 @@ if __name__ == "__main__":
 
 
 
+
+
+
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 #     xg_clf = XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0, reg_lambda=1, subsample=1, colsample_bytree=1, objective='multi:softprob', num_class=10, random_state=10)
