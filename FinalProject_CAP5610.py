@@ -356,7 +356,7 @@ if __name__ == "__main__":
         plt.figure(figsize=(10, 6))
         plt.barh(range(20), top_shap_values, tick_label=top_features)
         plt.gca().invert_yaxis()
-        plt.title(f"Top 20 Features for Class (cls) Based on Mean SHAP Values")
+        plt.title(f"Top 20 Features for Class {cls} Based on Mean SHAP Values")
         plt.xlabel("Mean Absolute SHAP Value")
         plt.show()
 
