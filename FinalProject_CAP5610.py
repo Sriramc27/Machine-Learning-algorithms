@@ -101,131 +101,131 @@ if __name__ == "__main__":
     X_large_mean = X_large.mean(axis=1)
     X_small_mean = X_small.mean(axis=1)
 
-    # # use z-score normalization
-    # X_z_sm = stats.zscore(X_small)
-    # X_z_sm_mn = X_z_sm.mean(axis=1)
-    # X_z_lg = stats.zscore(X_large)
-    # X_z_lg_mn = X_z_lg.mean(axis=1)
+    # use z-score normalization
+    X_z_sm = stats.zscore(X_small)
+    X_z_sm_mn = X_z_sm.mean(axis=1)
+    X_z_lg = stats.zscore(X_large)
+    X_z_lg_mn = X_z_lg.mean(axis=1)
 
-    # # user min-max normalization
-    # scaler = MinMaxScaler()
-    # X_minmax_sm = scaler.fit_transform(X_small)
-    # X_minmax_lg = scaler.fit_transform(X_large)
-    # X_minmax_sm_mn = X_minmax_sm.mean(axis=1)
-    # X_minmax_lg_mn = X_minmax_lg.mean(axis=1)
+    # user min-max normalization
+    scaler = MinMaxScaler()
+    X_minmax_sm = scaler.fit_transform(X_small)
+    X_minmax_lg = scaler.fit_transform(X_large)
+    X_minmax_sm_mn = X_minmax_sm.mean(axis=1)
+    X_minmax_lg_mn = X_minmax_lg.mean(axis=1)
 
-    # # +++++++++++++++++++++++++++++++
-    # # ++++++++   OUTPUT 1    +++++++
-    # # +++++++++++++++++++++++++++++++
-    # # get the counts
-    # counterlarge = collections.Counter(y_large)
-    # print(counterlarge)
-    # countersmall = collections.Counter(y_small)
-    # print(countersmall)
+    # +++++++++++++++++++++++++++++++
+    # ++++++++   OUTPUT 1    +++++++
+    # +++++++++++++++++++++++++++++++
+    # get the counts
+    counterlarge = collections.Counter(y_large)
+    print(counterlarge)
+    countersmall = collections.Counter(y_small)
+    print(countersmall)
 
-    # # +++++++++++++++++++++++++++++++
-    # # ++++++++   OUTPUT 2    +++++++
-    # # +++++++++++++++++++++++++++++++
-    # # draw violin plots with not-normalized data
-    # draw_violin(X_small_mean, y_small, targets, 'Small dataset not-normalized')
-    # draw_violin(X_large_mean, y_large, targets, 'Large dataset not-normalized')
+    # +++++++++++++++++++++++++++++++
+    # ++++++++   OUTPUT 2    +++++++
+    # +++++++++++++++++++++++++++++++
+    # draw violin plots with not-normalized data
+    draw_violin(X_small_mean, y_small, targets, 'Small dataset not-normalized')
+    draw_violin(X_large_mean, y_large, targets, 'Large dataset not-normalized')
 
-    # # violin plots with z-score normalized data
-    # draw_violin(X_z_sm_mn, y_small, targets, 'Small dataset z-score')
-    # draw_violin(X_z_lg_mn, y_large, targets, 'Large dataset z-score')
+    # violin plots with z-score normalized data
+    draw_violin(X_z_sm_mn, y_small, targets, 'Small dataset z-score')
+    draw_violin(X_z_lg_mn, y_large, targets, 'Large dataset z-score')
 
-    # # violin plots with min-max normalized data
-    # draw_violin(X_minmax_sm_mn, y_small, targets, 'Small dataset min-max')
-    # draw_violin(X_minmax_lg_mn, y_large, targets, 'Large dataset min-max')
+    # violin plots with min-max normalized data
+    draw_violin(X_minmax_sm_mn, y_small, targets, 'Small dataset min-max')
+    draw_violin(X_minmax_lg_mn, y_large, targets, 'Large dataset min-max')
 
-    # # +++++++++++++++++++++++++++++++
-    # # ++++++++   OUTPUT 3    +++++++
-    # # +++++++++++++++++++++++++++++++
-    # # Experimental design for XGBoost
-    # # set the seed
-    # seedloop = [0, 10, 20, 30, 40]
-    # xg_accuracies_sm = []
-    # xg_accuracies_sm_z = []
-    # xg_accuracies_sm_m = []
-    # xg_accuracies_lg = []
-    # xg_accuracies_lg_z = []
-    # xg_accuracies_lg_m = []
+    # +++++++++++++++++++++++++++++++
+    # ++++++++   OUTPUT 3    +++++++
+    # +++++++++++++++++++++++++++++++
+    # Experimental design for XGBoost
+    # set the seed
+    seedloop = [0, 10, 20, 30, 40]
+    xg_accuracies_sm = []
+    xg_accuracies_sm_z = []
+    xg_accuracies_sm_m = []
+    xg_accuracies_lg = []
+    xg_accuracies_lg_z = []
+    xg_accuracies_lg_m = []
 
-    # # not not-normalized data
-    # # split data set for train and test with 80/20 stratified split
-    # X_train_lg, X_test_lg, y_train_lg, y_test_lg = train_test_split(X_large.to_numpy(), y_large, stratify=y_large,
-    #                                                                 test_size=0.20, random_state=0)
-    # X_train_sm, X_test_sm, y_train_sm, y_test_sm = train_test_split(X_small.to_numpy(), y_small, stratify=y_small,
-    #                                                                 test_size=0.20, random_state=0)
+    # not not-normalized data
+    # split data set for train and test with 80/20 stratified split
+    X_train_lg, X_test_lg, y_train_lg, y_test_lg = train_test_split(X_large.to_numpy(), y_large, stratify=y_large,
+                                                                    test_size=0.20, random_state=0)
+    X_train_sm, X_test_sm, y_train_sm, y_test_sm = train_test_split(X_small.to_numpy(), y_small, stratify=y_small,
+                                                                    test_size=0.20, random_state=0)
 
-    # # split data set after normalizing with z-score
-    # X_trainz_lg, X_testz_lg, y_trainz_lg, y_testz_lg = train_test_split(X_z_lg, y_large, stratify=y_large,
-    #                                                                     test_size=0.20, random_state=0)
-    # X_trainz_sm, X_testz_sm, y_trainz_sm, y_testz_sm = train_test_split(X_z_sm, y_small, stratify=y_small,
-    #                                                                     test_size=0.20, random_state=0)
-    # # split data set after normalizing with min-max
-    # X_trainm_lg, X_testm_lg, y_trainm_lg, y_testm_lg = train_test_split(X_minmax_lg, y_large, stratify=y_large,
-    #                                                                     test_size=0.20, random_state=0)
-    # X_trainm_sm, X_testm_sm, y_trainm_sm, y_testm_sm = train_test_split(X_minmax_sm, y_small, stratify=y_small,
-    #                                                                     test_size=0.20, random_state=0)
+    # split data set after normalizing with z-score
+    X_trainz_lg, X_testz_lg, y_trainz_lg, y_testz_lg = train_test_split(X_z_lg, y_large, stratify=y_large,
+                                                                        test_size=0.20, random_state=0)
+    X_trainz_sm, X_testz_sm, y_trainz_sm, y_testz_sm = train_test_split(X_z_sm, y_small, stratify=y_small,
+                                                                        test_size=0.20, random_state=0)
+    # split data set after normalizing with min-max
+    X_trainm_lg, X_testm_lg, y_trainm_lg, y_testm_lg = train_test_split(X_minmax_lg, y_large, stratify=y_large,
+                                                                        test_size=0.20, random_state=0)
+    X_trainm_sm, X_testm_sm, y_trainm_sm, y_testm_sm = train_test_split(X_minmax_sm, y_small, stratify=y_small,
+                                                                        test_size=0.20, random_state=0)
 
-    # # loop for seed values large dataset
-    # for i in seedloop:
-    #     xg_accuracies_lg.append(xgb_score(X_train_lg, y_train_lg, X_test_lg, y_test_lg, i))
-    #     xg_accuracies_lg_z.append(xgb_score(X_trainz_lg, y_trainz_lg, X_testz_lg, y_testz_lg, i))
-    #     xg_accuracies_lg_m.append(xgb_score(X_trainm_lg, y_trainm_lg, X_testm_lg, y_testm_lg, i))
+    # loop for seed values large dataset
+    for i in seedloop:
+        xg_accuracies_lg.append(xgb_score(X_train_lg, y_train_lg, X_test_lg, y_test_lg, i))
+        xg_accuracies_lg_z.append(xgb_score(X_trainz_lg, y_trainz_lg, X_testz_lg, y_testz_lg, i))
+        xg_accuracies_lg_m.append(xgb_score(X_trainm_lg, y_trainm_lg, X_testm_lg, y_testm_lg, i))
 
-    # print("XGBoost Accuracies LG not-normalized - ", xg_accuracies_lg)
-    # print("XGBoost Accuracies LG zscore - ", xg_accuracies_lg_z)
-    # print("XGBoost Accuracies LG minmax - ", xg_accuracies_lg_m)
+    print("XGBoost Accuracies LG not-normalized - ", xg_accuracies_lg)
+    print("XGBoost Accuracies LG zscore - ", xg_accuracies_lg_z)
+    print("XGBoost Accuracies LG minmax - ", xg_accuracies_lg_m)
 
-    # # draw plot with classifier results
-    # plotdata = pd.DataFrame({
-    #     "All genes not normalized": xg_accuracies_lg,
-    #     "All genes z-score": xg_accuracies_lg_z,
-    #     "All genes min-max": xg_accuracies_lg_m
-    # },
-    #     index=["0", "10", "20", "30", "40"]
-    # )
-    # plotdata.plot(kind="bar", figsize=(15, 8))
+    # draw plot with classifier results
+    plotdata = pd.DataFrame({
+        "All genes not normalized": xg_accuracies_lg,
+        "All genes z-score": xg_accuracies_lg_z,
+        "All genes min-max": xg_accuracies_lg_m
+    },
+        index=["0", "10", "20", "30", "40"]
+    )
+    plotdata.plot(kind="bar", figsize=(15, 8))
 
-    # plt.title("XGBoost Large Dataset")
+    plt.title("XGBoost Large Dataset")
 
-    # plt.xlabel("Random State")
+    plt.xlabel("Random State")
 
-    # plt.ylabel("Accuracy")
+    plt.ylabel("Accuracy")
 
-    # plt.legend(prop={'size': 10}, loc='lower right')
-    # plt.show()
+    plt.legend(prop={'size': 10}, loc='lower right')
+    plt.show()
 
-    # # loop for seed values small dataset
-    # for i in seedloop:
-    #     xg_accuracies_sm.append(xgb_score(X_train_sm, y_train_sm, X_test_sm, y_test_sm, i))
-    #     xg_accuracies_sm_z.append(xgb_score(X_trainz_sm, y_trainz_sm, X_testz_sm, y_testz_sm, i))
-    #     xg_accuracies_sm_m.append(xgb_score(X_trainm_sm, y_trainm_sm, X_testm_sm, y_testm_sm, i))
+    # loop for seed values small dataset
+    for i in seedloop:
+        xg_accuracies_sm.append(xgb_score(X_train_sm, y_train_sm, X_test_sm, y_test_sm, i))
+        xg_accuracies_sm_z.append(xgb_score(X_trainz_sm, y_trainz_sm, X_testz_sm, y_testz_sm, i))
+        xg_accuracies_sm_m.append(xgb_score(X_trainm_sm, y_trainm_sm, X_testm_sm, y_testm_sm, i))
 
-    # print("XGBoost Accuracies SM not-normalized - ", xg_accuracies_sm)
-    # print("XGBoost Accuracies SM zscore - ", xg_accuracies_sm_z)
-    # print("XGBoost Accuracies SM minmax - ", xg_accuracies_sm_m)
+    print("XGBoost Accuracies SM not-normalized - ", xg_accuracies_sm)
+    print("XGBoost Accuracies SM zscore - ", xg_accuracies_sm_z)
+    print("XGBoost Accuracies SM minmax - ", xg_accuracies_sm_m)
 
-    # # draw plot with classifier results
-    # plotdata = pd.DataFrame({
-    #     "All genes not normalized": xg_accuracies_sm,
-    #     "All genes z-score": xg_accuracies_sm_z,
-    #     "All genes min-max": xg_accuracies_sm_m
-    # },
-    #     index=["0", "10", "20", "30", "40"]
-    # )
-    # plotdata.plot(kind="bar", figsize=(15, 8))
+    # draw plot with classifier results
+    plotdata = pd.DataFrame({
+        "All genes not normalized": xg_accuracies_sm,
+        "All genes z-score": xg_accuracies_sm_z,
+        "All genes min-max": xg_accuracies_sm_m
+    },
+        index=["0", "10", "20", "30", "40"]
+    )
+    plotdata.plot(kind="bar", figsize=(15, 8))
 
-    # plt.title("XGBoost")
+    plt.title("XGBoost")
 
-    # plt.xlabel("Random State")
+    plt.xlabel("Random State")
 
-    # plt.ylabel("Accuracy")
+    plt.ylabel("Accuracy")
 
-    # plt.legend(prop={'size': 10}, loc='lower right')
-    # plt.show()
+    plt.legend(prop={'size': 10}, loc='lower right')
+    plt.show()
 
     # +++++++++++++++++++++++++++++++++++++++++++++++
     # ++++++++++++++++   SHAP    Output 4
