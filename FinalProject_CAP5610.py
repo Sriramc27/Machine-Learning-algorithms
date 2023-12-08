@@ -300,9 +300,9 @@ if __name__ == "__main__":
     # Normalization types
     normalization_types = ["unnormalized", "z-score", "min-max"]
 
-    # Perform 5-fold cross-validation for each normalization type
+    # Perform 5-fold cross-validation for normalization type
     for normalization_type in normalization_types:
-        # Preprocess the data based on normalization type
+        # process data based on normalization
         if normalization_type == "z-score":
             scaler = StandardScaler()
         elif normalization_type == "min-max":
@@ -310,30 +310,30 @@ if __name__ == "__main__":
         else:
             scaler = None
 
-        # Initialize cross-validation
+        # Initialize
         kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=10)
 
         for train_index, test_index in kf.split(X_small, y_small):
             X_train_fold, X_test_fold = X_small.iloc[train_index], X_small.iloc[test_index]
             y_train_fold, y_test_fold = y_small.iloc[train_index], y_small.iloc[test_index]
 
-            # Apply normalization
+            # normalize
             if scaler is not None:
                 X_train_fold = scaler.fit_transform(X_train_fold)
                 X_test_fold = scaler.transform(X_test_fold)
 
-            # Train XGBoost classifier
+            # Train model
             model = XGBClassifier(xg_clf)
             model.fit(X_train_fold, y_train_fold)
 
-            # Create SHAP explainer if not created yet
+            # Create SHAP explainer
             if explainer is None:
                 explainer = shap.TreeExplainer(model)
 
-            # Apply SHAP explainer for each fold
+            # Apply SHAP
             shap_values = explainer.shap_values(X_test_fold)
 
-            # Convert shap_values list to NumPy array
+            # Convert shap_values list to NumPy
             shap_values = np.array(shap_values)
 
             # Isolate top 20 features for each sample
@@ -350,10 +350,10 @@ if __name__ == "__main__":
                 samples_in_class_df = pd.DataFrame(samples_in_class)
                 selected_samples = samples_in_class_df.sample(min(3, len(samples_in_class)), random_state=10)
 
-                # Ensure selected_samples.index is within the bounds of top_features_indices_2d
+                # Ensure no index out of bound error
                 valid_indices = selected_samples.index[selected_samples.index < top_features_indices_2d.shape[0]]
 
-                # Draw Venn diagram using the top 20 features for each set of three samples
+                # Draw Venn diagram
                 feature_sets = [set(top_features_indices_2d[sample_id]) for sample_id in valid_indices]
                 venn3(feature_sets, set_labels=[f"Sample {i+1}" for i in range(len(feature_sets))])
                 plt.title(f"Class {class_label} - Top 20 Features Intersection ({normalization_type})")
