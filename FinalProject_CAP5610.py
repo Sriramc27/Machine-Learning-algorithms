@@ -84,11 +84,11 @@ def filter_shap(test_data, shap_array, y_true, y_map_new):
     pix_list = list(range(0, 784))
     # pix_list = pix_list[0: 783]
 
-    for i, sampl in enumerate(shap_array[0]):
+    for n, sampl in enumerate(shap_array[0]):
         # print(sampl)
-        sample_id = ids_list[i]
-        label = y_map_new[i]
-        truelabel = np.array(y_true)[i]
+        sample_id = ids_list[n]
+        label = y_map_new[n]
+        truelabel = np.array(y_true)[n]
         # print("label :", label)
         # label = pl.Expr.map_dict[label]
         # print(label)
