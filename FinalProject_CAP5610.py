@@ -48,8 +48,8 @@ def draw_violin(x, y, t, n):
 # calculate xgboost classifier accuracy in prediction and in cross-validation
 def xgb_score(x_trn, y_trn, x_tst, y_tst, r):
     xg_clf1 = XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0,
-                           reg_lambda=1, subsample=1, colsample_bytree=1, scale_pos_weight=1,
-                           objective='multi:softprob', num_class=10, random_state=r)
+                            reg_lambda=1, subsample=1, colsample_bytree=1, scale_pos_weight=1,
+                            objective='multi:softprob', num_class=10, random_state=r)
     xg_clf1.fit(x_trn, y_trn)
     xg_predict = xg_clf1.predict(x_tst)
     # calculate accuracy for test data
@@ -262,8 +262,6 @@ if __name__ == "__main__":
         9: 994
     }
 
-
-
     # Preprocess data
     X_large = largepd.drop(largepd.columns[[0, 1]], axis=1)  # drop first 2 columns
     y_large = largepd['0']  # these are the labels
@@ -287,10 +285,8 @@ if __name__ == "__main__":
     create_and_save_feature_importance_df(X_small, "unnormalized", "Local_Feature_Importance_DataFrame/Local_Feature_Importance_unnormalized.csv")
     create_and_save_feature_importance_df(X_small_train, "z-score", "Local_Feature_Importance_DataFrame/Local_Feature_Importance_z-score.csv")
     create_and_save_feature_importance_df(X_small_train, "min-max", "Local_Feature_Importance_DataFrame/Local_Feature_Importance_min-max.csv")
-    
-    
-    #++++++++++++++++ For venn diagrams with 5 fold 5-fold cross-validation
-
+     
+    # ++++++++++++++++ For venn diagrams with 5 fold 5-fold cross-validation
    
     # Initialize SHAP explainer
     explainer = None
