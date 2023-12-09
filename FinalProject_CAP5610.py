@@ -45,6 +45,7 @@ def draw_violin(x, y, t, n):
     plt.show()
 
 
+# calculate xgboost classifier accuracy in prediction and in cross-validation
 def xgb_score(x_trn, y_trn, x_tst, y_tst, r):
     xg_clf = XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0,
                            reg_lambda=1, subsample=1, colsample_bytree=1, scale_pos_weight=1,
