@@ -218,7 +218,7 @@ if __name__ == "__main__":
     )
     plotdata.plot(kind="bar", figsize=(15, 8))
 
-    plt.title("XGBoost")
+    plt.title("XGBoost Small Dataset")
 
     plt.xlabel("Random State")
 
