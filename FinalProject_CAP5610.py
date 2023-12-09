@@ -47,18 +47,34 @@ def draw_violin(x, y, t, n):
 
 # calculate xgboost classifier accuracy in prediction and in cross-validation
 def xgb_score(x_trn, y_trn, x_tst, y_tst, r):
-    xg_clf = XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0,
+    xg_clf1 = XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0,
                            reg_lambda=1, subsample=1, colsample_bytree=1, scale_pos_weight=1,
                            objective='multi:softprob', num_class=10, random_state=r)
-    xg_clf.fit(x_trn, y_trn)
-    xg_predict = xg_clf.predict(x_tst)
+    xg_clf1.fit(x_trn, y_trn)
+    xg_predict = xg_clf1.predict(x_tst)
     # calculate accuracy for test data
-    xg_scores_total = xg_clf.score(x_tst, y_tst)
-    xg_scores = cross_val_score(xg_clf, x_trn, y_trn, cv=5)
+    xg_scores_total = xg_clf1.score(x_tst, y_tst)
+    xg_scores = cross_val_score(xg_clf1, x_trn, y_trn, cv=5)
     for s in range(xg_scores.shape[0]):
         xg_scores_total += xg_scores[s]
 
     return xg_scores_total / (xg_scores.shape[0] + 1)
+
+
+# Function to create and save Local Feature Importance DataFrames
+def create_and_save_feature_importance_df(x, norm_type, save_path):
+    shp_values = explainer.shap_values(x)
+
+    # For multi-class classification, take SHAP values for the correct class
+    if len(shp_values) > 1:
+        shp_values = shp_values[y_small.unique().tolist().index(0)]  # Assuming class 0, adjust as needed
+
+    feature_importance_df = pd.DataFrame(shp_values, columns=X.columns)
+
+    # Save DataFrame to CSV
+    print(feature_importance_df)
+    feature_importance_df.to_csv(save_path, index=False)
+    print(f"Local Feature Importance DataFrame: {norm_type} created and saved at {save_path}")
 
 
 # filtering samples based on true predicted label
@@ -267,25 +283,6 @@ if __name__ == "__main__":
     # Initialize SHAP explainer
     explainer = shap.TreeExplainer(xg_clf)
 
-
-    # Function to create and save Local Feature Importance DataFrames
-    def create_and_save_feature_importance_df(X, normalization_type, save_path):
-        shap_values = explainer.shap_values(X)
-        
-        # For multi-class classification, take SHAP values for the correct class
-        if len(shap_values) > 1:
-            shap_values = shap_values[y_small.unique().tolist().index(0)]  # Assuming class 0, adjust as needed
-        
-        feature_importance_df = pd.DataFrame(shap_values, columns=X.columns)
-        
-        # Save DataFrame to CSV
-        print(feature_importance_df)
-        feature_importance_df.to_csv(save_path, index=False)
-        print(f"Local Feature Importance DataFrame: {normalization_type} created and saved at {save_path}")
-
-
-
-
     # Create and save Local Feature Importance DataFrames
     create_and_save_feature_importance_df(X_small, "unnormalized", "Local_Feature_Importance_DataFrame/Local_Feature_Importance_unnormalized.csv")
     create_and_save_feature_importance_df(X_small_train, "z-score", "Local_Feature_Importance_DataFrame/Local_Feature_Importance_z-score.csv")
@@ -428,6 +425,23 @@ if __name__ == "__main__":
 
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#  ---- Removed code section
+    # this function was in the middle of main, moved it up and renamed the parameters so that they wouldn't shadow global variables
+    
+    # # Function to create and save Local Feature Importance DataFrames
+    # def create_and_save_feature_importance_df(X, normalization_type, save_path):
+    #     shap_values = explainer.shap_values(X)
+        
+    #     # For multi-class classification, take SHAP values for the correct class
+    #     if len(shap_values) > 1:
+    #         shap_values = shap_values[y_small.unique().tolist().index(0)]  # Assuming class 0, adjust as needed
+        
+    #     feature_importance_df = pd.DataFrame(shap_values, columns=X.columns)
+        
+    #     # Save DataFrame to CSV
+    #     print(feature_importance_df)
+    #     feature_importance_df.to_csv(save_path, index=False)
+    #     print(f"Local Feature Importance DataFrame: {normalization_type} created and saved at {save_path}")
 
 
 #     xg_clf = XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0, reg_lambda=1, subsample=1, colsample_bytree=1, objective='multi:softprob', num_class=10, random_state=10)
