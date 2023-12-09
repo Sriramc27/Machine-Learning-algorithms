@@ -168,3 +168,92 @@ if __name__ == "__main__":
                 plt.show()
                 plt.close()
                 plt.figure()
+
+
+#### code used to save modlels into pkls to use them later for shapley
+import numpy as np
+import pandas as pd
+import xgboost as xgb
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import json
+import pickle
+
+# Assuming you have a dataset X and labels y
+
+smallpd = pd.read_csv('/content/Dataset_10k_1.csv', header=0)  # load small csv to memory
+targets = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]  # define 10 classes for single digits
+
+X = smallpd.drop(smallpd.columns[[0, 1]], axis=1)  # drop first 2 columns
+y = smallpd['0']  # these are the labels
+X_mean = X.mean(axis=1)
+
+# Define the number of folds
+num_folds = 5
+
+# Initialize the StratifiedKFold object
+stratified_kfold = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=42)
+
+# Define normalization types
+normalization_types = ['unnormalized', 'z-score', 'min-max']
+
+
+
+for norm_type in normalization_types:
+    print(f"\nTraining models for {norm_type} normalization\n")
+
+    # Initialize a list to store the models
+    models = []
+
+    # Initialize a list to store the evaluation results
+    accuracies = []
+
+    # Apply the selected normalization type
+    if norm_type == 'unnormalized':
+        X_preprocessed = X.copy()  # No additional processing needed for unnormalized data
+    elif norm_type == 'z-score':
+        scaler = StandardScaler()
+        X_preprocessed = scaler.fit_transform(X)
+        X_preprocessed = pd.DataFrame(X_preprocessed, columns=X.columns)
+    elif norm_type == 'min-max':
+        scaler = MinMaxScaler()
+        X_preprocessed = scaler.fit_transform(X)
+        X_preprocessed = pd.DataFrame(X_preprocessed, columns=X.columns)
+
+    # Loop through each fold
+    for fold_idx, (train_idx, test_idx) in enumerate(stratified_kfold.split(X_preprocessed, y)):
+        # Split the data into training and testing sets for this fold
+        X_train, X_test = X_preprocessed.iloc[train_idx], X_preprocessed.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+
+        # Initialize and train the XGBoost model
+        model = xgb.XGBClassifier(learning_rate=0.3, n_estimators=150, max_depth=6, min_child_weight=1, gamma=0,
+                                  reg_lambda=1, subsample=1, colsample_bytree=1, scale_pos_weight=1,
+                                  objective='multi:softprob', num_class=len(np.unique(y)), random_state=10)
+        model.fit(X_train, y_train)
+
+        # Make predictions on the test set
+        y_pred = model.predict(X_test)
+
+        # Evaluate the accuracy for this fold
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f"Fold {fold_idx + 1} Accuracy: {accuracy}")
+
+        # Save the model as a pickle file
+        model_filename = f"model_{norm_type}_fold_{fold_idx}.pkl"
+        with open(model_filename, 'wb') as pickle_file:
+            pickle.dump(model, pickle_file)
+
+        print(f"Model saved as {model_filename}")
+
+        # Save the model filename to the list
+        models.append(model_filename)
+        accuracies.append(accuracy)
+
+    # Print the average accuracy across all folds for this normalization type
+    print(f"\nAverage Accuracy ({norm_type} normalization): {np.mean(accuracies)}")
+
+    # Save the list of model filenames to a JSON file
+    with open(f"model_filenames_{norm_type}.json", "w") as json_file:
+        json.dump(models, json_file)
